@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "BEEF+ Task Notifier",
+  "version": "1.0",
+  "description": "神戸大学BEEF+の課題を取得して締切前に通知します。",
+  "permissions": [
+    "storage",
+    "notifications",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://beefplus.center.kobe-u.ac.jp/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://beefplus.center.kobe-u.ac.jp/lms/task*"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}
