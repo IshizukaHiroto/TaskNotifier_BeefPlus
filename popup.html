@@ -7,11 +7,13 @@
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <div id="taskList" class="task-container">
-    <p>課題は登録されていません。</p>
+  <div class="popup-shell">
+    <h2>課題一覧</h2>
+    <div id="taskList" class="task-container">
+      <p>課題は登録されていません。</p>
+    </div>
+    <p id="lastUpdated" class="updated-time">最終更新：データ未取得</p>
   </div>
-
-  <p id="lastUpdated" class="updated-time">最終更新：データ未取得</p>
 
   <script src="popup.js"></script>
 </body>

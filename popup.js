@@ -8,15 +8,20 @@ function formatRemainingTime(dueISO) {
 
   if (diffMs <= 0) return "締切済み";
 
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffHours / 24);
-  const remainingHours = diffHours % 24;
+
+  if (diffMinutes < 60) {
+    const minutesToShow = Math.max(1, diffMinutes);
+    return `あと${minutesToShow}分`;
+  }
 
   if (diffHours < 24) {
     return `あと${diffHours}時間`;
-  } else {
-    return `あと${diffDays}日${remainingHours}時間`;
   }
+
+  return `あと${diffDays}日`;
 }
 
 // === 課題一覧をカード形式で描画 ===
