@@ -7,14 +7,18 @@
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <div class="popup-shell">
+  <main class="popup-shell">
     <h2>課題一覧</h2>
-    <div id="taskList" class="task-container">
+    <!-- [BEEF+] CSSのカード構造に合わせたセクション -->
+    <section id="taskList" class="task-container">
       <p>課題は登録されていません。</p>
-    </div>
+    </section>
     <p id="lastUpdated" class="updated-time">最終更新：データ未取得</p>
-  </div>
-
+  </main>
+  <footer class="go-beefplus">
+    <!-- [BEEF+] 外部リンクはpopup.jsでタブを開く -->
+    <a href="https://beefplus.center.kobe-u.ac.jp/lms/task">Beef+に最新の課題情報を確認しに行く</a>
+  </footer>
   <script src="popup.js"></script>
 </body>
 </html>

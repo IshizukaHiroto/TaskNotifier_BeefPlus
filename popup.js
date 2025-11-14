@@ -29,6 +29,7 @@ chrome.storage.local.get(["tasks", "lastUpdated"], (data) => {
   const container = document.getElementById("taskList");
   const updated = document.getElementById("lastUpdated");
   const tasks = (data.tasks || []).sort((a, b) => new Date(a.due) - new Date(b.due));
+  const beefLink = document.querySelector(".go-beefplus a");
 
   if (tasks.length === 0) {
     container.innerHTML = "<p>課題は登録されていません。</p>";
@@ -37,11 +38,15 @@ chrome.storage.local.get(["tasks", "lastUpdated"], (data) => {
     for (const t of tasks) {
       const card = document.createElement("div");
       card.className = "task-card";
+      // [BEEF+] CSSの構造と一致するようにDOMを組み立て
       card.innerHTML = `
         <div class="task-title">${t.title}</div>
-        <div class="task-meta">${t.course} / ${t.contentType}</div>
+        <div class="task-meta">
+          <span>${t.course}</span>
+          <span>${t.contentType}</span>
+        </div>
         <div class="task-due">
-          締切：${new Date(t.due).toLocaleString()}
+          <span>締切：${new Date(t.due).toLocaleString()}</span>
           <span class="remaining">${formatRemainingTime(t.due)}</span>
         </div>
       `;
@@ -56,5 +61,13 @@ chrome.storage.local.get(["tasks", "lastUpdated"], (data) => {
     updated.textContent = `最終更新：${date.toLocaleString()}`;
   } else {
     updated.textContent = "最終更新：データ未取得";
+  }
+
+  // [BEEF+] 追加: popup内リンクをクリックしたら新しいタブでBeef+を開く
+  if (beefLink) {
+    beefLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      chrome.tabs.create({ url: beefLink.href });
+    });
   }
 });
