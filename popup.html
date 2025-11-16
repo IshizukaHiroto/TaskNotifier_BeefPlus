@@ -7,12 +7,20 @@
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
+   <!-- <header> 
+    <h1>BEEF+ お知らせ一覧</h1>
+     ここにBEEF＋からの課題以外のお知らせ(メール受信した内容を表示する。)
+    </header>   -->
   <main class="popup-shell">
     <h2>課題一覧</h2>
+    <!-- ここにBEEF+から新規課題が追加されたとのメール受信した内容をもとに表示する,提出リンクはないのでクリックすると[https://beefplus.center.kobe-u.ac.jp/lms/task]に飛ぶ、期限は"情報がありません" とし期限までの時間のところはあと"不明時間"と出す-->
+    
+    <!-- ここから下は実際にBEEF＋のサイトの課題一覧から取得したデータを表示する -->
     <!-- [BEEF+] CSSのカード構造に合わせたセクション -->
     <section id="taskList" class="task-container">
       <p>課題は登録されていません。</p>
     </section>
+    <!-- 最終更新日時 -->
     <p id="lastUpdated" class="updated-time">最終更新：データ未取得</p>
   </main>
   <footer class="go-beefplus">

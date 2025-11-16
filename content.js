@@ -1,6 +1,25 @@
 // === content.js ===
 // BEEF+ の「課題・テスト一覧」ページから課題情報を抽出して保存
 
+function parseDeadline(dueText) {
+  if (!dueText) return null;
+  // [BEEF+] 修正: 全角混在など崩れた日付もできるだけ解釈する
+  const normalized = dueText
+    .replace(/[年月]/g, "/")
+    .replace(/日/g, "")
+    .replace(/－/g, "-")
+    .replace(/ー/g, "-")
+    .replace(/-/g, "/")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+
+  const fallback = Date.parse(dueText);
+  return Number.isNaN(fallback) ? null : new Date(fallback);
+}
+
 function parseTasks() {
   const tasks = [];
 
@@ -21,16 +40,15 @@ function parseTasks() {
     const url = new URL(titleEl.getAttribute("href"), location.origin).href;
     const dueText = deadlineEl.textContent.trim();
 
-    // 期限をISO形式に変換
-    const due = new Date(dueText.replace(/-/g, "/"));
-    if (isNaN(due)) return; // 無効な日付はスキップ
+    // 期限をISO形式に変換（解釈できない場合は null）
+    const due = parseDeadline(dueText);
 
     tasks.push({
       course,
       contentType,
       title,
       url,
-      due: due.toISOString()
+      due: due ? due.toISOString() : null
     });
   });
 
