@@ -29,7 +29,7 @@ chrome.storage.local.get(["tasks", "lastUpdated"], (data) => {
   const container = document.getElementById("taskList");
   const updated = document.getElementById("lastUpdated");
   const tasks = (data.tasks || []).sort((a, b) => new Date(a.due) - new Date(b.due));
-  const beefLink = document.querySelector(".go-beefplus a");
+  const beefLink = document.querySelector(".beef-link-btn");
 
   if (tasks.length === 0) {
     container.innerHTML = "<p>課題は登録されていません。</p>";

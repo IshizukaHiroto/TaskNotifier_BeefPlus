@@ -37,12 +37,40 @@ body {
   box-shadow: var(--shadow);
 }
 
+.heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 h2 {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
-  text-align: center;
+  text-align: left;
   letter-spacing: 0.08em;
+}
+
+.beef-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: #eef2f7;
+  color: var(--link-blue);
+  text-decoration: none;
+  box-shadow: 0 6px 14px rgba(17, 24, 39, 0.08);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.beef-link-btn:hover {
+  background: #e2e8f0;
+  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
 }
 
 .task-container {
@@ -103,21 +131,6 @@ h2 {
 .updated-time {
   font-size: 12px;
   color: var(--text-muted);
-  margin-top: 18px;
+  margin: 2px 0 14px;
   text-align: right;
-}
-
-.go-beefplus {
-  background: var(--panel-bg);
-  border-radius: var(--radius);
-  border: 1px solid var(--panel-border);
-  padding: 14px 16px;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-
-.go-beefplus a {
-  font-size: 13px;
-  text-decoration: none;
-  color: var(--link-blue);
 }
