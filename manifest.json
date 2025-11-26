@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "BEEF+ Task Notifier",
-  "version": "1.0",
+  "name": "BeefPlusTaskManager",
+  "version": "1.01",
   "description": "神戸大学BEEF+の課題を取得して締切前に通知します。",
   "permissions": [
     "storage",
