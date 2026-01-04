@@ -1,23 +1,38 @@
 {
   "manifest_version": 3,
   "name": "BeefPlusTaskManager",
-  "version": "1.01",
-  "description": "神戸大学BEEF+の課題を取得して締切前に通知します。",
+  "version": "1.1.0",
+  "description": "神戸大学BEEF+の課題を取得して締切前に通知します。自動ログイン機能も搭載。",
   "permissions": [
     "storage",
     "notifications",
     "alarms"
   ],
   "host_permissions": [
-    "https://beefplus.center.kobe-u.ac.jp/*"
+    "https://beefplus.center.kobe-u.ac.jp/*",
+    "https://*.kobe-u.ac.jp/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://beefplus.center.kobe-u.ac.jp/lms/task*"],
-      "js": ["content.js"]
+      "matches": [
+        "https://beefplus.center.kobe-u.ac.jp/lms/task*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://beefplus.center.kobe-u.ac.jp/*",
+        "https://*.kobe-u.ac.jp/*"
+      ],
+      "js": [
+        "content-autologin.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "action": {
