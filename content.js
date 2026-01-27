@@ -3,6 +3,10 @@
 
 function parseTasks() {
   const tasks = [];
+  const noPendingEl = document.querySelector(".contents-detail .contents-list .no-data");
+  const noPendingDetected = Boolean(
+    noPendingEl && noPendingEl.textContent.includes("未提出の課題・テスト一覧はありません")
+  );
 
   // 各課題行を取得
   const rows = document.querySelectorAll(".result_list_line.sortTaskBlock");
@@ -35,7 +39,7 @@ function parseTasks() {
   });
 
   console.log("[BEEF+] 抽出した課題:", tasks);
-  return tasks;
+  return { tasks, noPendingDetected };
 }
 
 // === ストレージ更新（新規追加・削除・更新） ===
@@ -56,6 +60,8 @@ function updateStoredTasks(newTasks) {
     // === 修正②: lastUpdated を保存し、正しい変数を使用 ===
     chrome.storage.local.set({
       tasks: merged,
+      noPending: false,
+      noPendingMessage: "",
       lastUpdated: new Date().toISOString()
     }, () => {
       // === 修正③: より明確なログ出力 ===
@@ -69,9 +75,18 @@ function updateStoredTasks(newTasks) {
 }
 
 // === 実行 ===
-const tasks = parseTasks();
-if (tasks.length > 0) {
-  updateStoredTasks(tasks);
+const result = parseTasks();
+if (result.noPendingDetected) {
+  chrome.storage.local.set({
+    tasks: [],
+    noPending: true,
+    noPendingMessage: "未提出の課題・テストはありません。おつかれさま！",
+    lastUpdated: new Date().toISOString()
+  }, () => {
+    console.log("[BEEF+] 未提出の課題・テストはありません。");
+  });
+} else if (result.tasks.length > 0) {
+  updateStoredTasks(result.tasks);
 } else {
   console.warn("[BEEF+] 課題が見つかりませんでした。ページ構造が変わった可能性があります。");
 }

@@ -82,13 +82,23 @@ function getUrgencyClass(dueISO) {
 
 // 課題一覧を描画
 function loadTasks() {
-  chrome.storage.local.get(["tasks", "lastUpdated"], (data) => {
+  chrome.storage.local.get(["tasks", "lastUpdated", "noPending", "noPendingMessage"], (data) => {
     const container = document.getElementById("taskList");
     const updated = document.getElementById("lastUpdated");
     const tasks = (data.tasks || []).sort((a, b) => new Date(a.due) - new Date(b.due));
     const beefLink = document.querySelector(".beef-link-btn");
+    const noPending = Boolean(data.noPending);
+    const noPendingMessage = data.noPendingMessage || "未提出の課題・テストはありません。おつかれさま！";
 
-    if (tasks.length === 0) {
+    if (tasks.length === 0 && noPending) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-icon">🎉</span>
+          <p>${noPendingMessage}</p>
+          <p class="empty-hint">この調子でいきましょう</p>
+        </div>
+      `;
+    } else if (tasks.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">📋</span>
