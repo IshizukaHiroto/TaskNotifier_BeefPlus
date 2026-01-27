@@ -84,9 +84,8 @@ class TaskListController {
   renderNoPending(container, message) {
     container.innerHTML = `
         <div class="empty-state">
-          <span class="empty-icon">🎉</span>
           <p>${message}</p>
-          <p class="empty-hint">この調子でいきましょう</p>
+          <p class="empty-hint">Everything is up to date.</p>
         </div>
       `;
   }
@@ -94,9 +93,9 @@ class TaskListController {
   renderEmpty(container) {
     container.innerHTML = `
         <div class="empty-state">
-          <span class="empty-icon">📋</span>
-          <p>課題は登録されていません</p>
-          <p class="empty-hint">Beef+の課題ページを開くと自動で取得されます</p>
+          <span class="empty-icon">📂</span>
+          <p>No tasks found</p>
+          <p class="empty-hint">Open BEEF+ to sync assignments.</p>
         </div>
       `;
   }
@@ -117,7 +116,7 @@ class TaskListController {
             <span class="content-tag">${task.contentType}</span>
           </div>
           <div class="task-due">
-            <span class="due-label">締切：${new Date(task.due).toLocaleString("ja-JP", {
+            <span class="due-label">Due: ${new Date(task.due).toLocaleString("ja-JP", {
               month: "numeric",
               day: "numeric",
               hour: "2-digit",
@@ -133,14 +132,14 @@ class TaskListController {
   renderUpdated(updatedEl, lastUpdated) {
     if (lastUpdated) {
       const date = new Date(lastUpdated);
-      updatedEl.textContent = `最終更新：${date.toLocaleString("ja-JP", {
+      updatedEl.textContent = `Last sync: ${date.toLocaleString("ja-JP", {
         month: "numeric",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
       })}`;
     } else {
-      updatedEl.textContent = "最終更新：データ未取得";
+      updatedEl.textContent = "Last sync: no data";
     }
   }
 
@@ -161,8 +160,7 @@ class TaskListController {
         (a, b) => new Date(a.due) - new Date(b.due)
       );
       const noPending = Boolean(data.noPending);
-      const noPendingMessage =
-        data.noPendingMessage || "未提出の課題・テストはありません。おつかれさま！";
+      const noPendingMessage = data.noPendingMessage || "No pending tasks.";
 
       if (tasks.length === 0 && noPending) {
         this.renderNoPending(container, noPendingMessage);
@@ -228,14 +226,13 @@ class AutoLoginController {
         this.storedCredentials = credentials;
         this.usernameInput.value = credentials.username || "";
         this.passwordInput.value = credentials.password || "";
-        this.showStatus("✓ 保存済みの情報を読み込みました", "success");
+        this.showStatus("✓ Saved credentials loaded", "success");
       } else {
-        this.showStatus("保存された情報はありません", "info");
+        this.showStatus("No saved credentials", "info");
       }
       this.updateActionState();
     } catch (error) {
-      console.error("資格情報の読み込みに失敗しました", error);
-      this.showStatus("保存情報の読み込みに失敗しました", "error");
+      this.showStatus("Failed to load credentials", "error");
     }
   }
 
@@ -250,18 +247,18 @@ class AutoLoginController {
       this.storedCredentials.password === password;
 
     if (!hasStored) {
-      this.actionButton.textContent = "保存";
+      this.actionButton.textContent = "Save";
       this.actionButton.disabled = !hasInput;
       return;
     }
 
     if (matchesStored) {
-      this.actionButton.textContent = "保存済";
+      this.actionButton.textContent = "Saved";
       this.actionButton.disabled = true;
       return;
     }
 
-    this.actionButton.textContent = "更新";
+    this.actionButton.textContent = "Update";
     this.actionButton.disabled = !hasInput;
   }
 
@@ -273,7 +270,7 @@ class AutoLoginController {
     const hasInput = Boolean(username && password);
 
     if (!hasInput) {
-      this.showStatus("学籍番号とパスワードを入力してください", "error");
+      this.showStatus("Enter student ID and password", "error");
       return;
     }
 
@@ -281,14 +278,13 @@ class AutoLoginController {
       await this.persistCredentials(username, password);
       this.storedCredentials = { username, password };
       const message =
-        this.actionButton.textContent === "更新"
-          ? "✓ 情報を更新しました"
-          : "✓ 保存しました";
+        this.actionButton.textContent === "Update"
+          ? "✓ Credentials updated"
+          : "✓ Credentials saved";
       this.showStatus(message, "success");
       this.updateActionState();
     } catch (error) {
-      console.error("資格情報の保存/更新に失敗しました", error);
-      this.showStatus("保存/更新に失敗しました", "error");
+      this.showStatus("Failed to save credentials", "error");
     }
   }
 
@@ -298,11 +294,10 @@ class AutoLoginController {
       this.usernameInput.value = "";
       this.passwordInput.value = "";
       this.storedCredentials = null;
-      this.showStatus("保存情報を削除しました", "info");
+      this.showStatus("Credentials removed", "info");
       this.updateActionState();
     } catch (error) {
-      console.error("資格情報の削除に失敗しました", error);
-      this.showStatus("削除に失敗しました", "error");
+      this.showStatus("Failed to remove credentials", "error");
     }
   }
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BeefPlusEnhancer - 課題・自動ログイン</title>
+  <title>BEEF+ Task Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,38 +13,38 @@
   <main class="popup-shell">
     <!-- タブナビゲーション -->
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="tasks">課題一覧</button>
-      <button class="tab-btn" data-tab="autologin">自動ログイン</button>
+      <button class="tab-btn active" data-tab="tasks">Tasks</button>
+      <button class="tab-btn" data-tab="autologin">Credentials</button>
     </div>
 
     <!-- 課題一覧タブ -->
     <div id="tab-tasks" class="tab-content active">
       <div class="heading-row">
-        <h2>課題一覧</h2>
-        <a class="beef-link-btn" href="https://beefplus.center.kobe-u.ac.jp/lms/task">Beef+へ</a>
+        <h2>Tasks</h2>
+        <a class="beef-link-btn" href="https://beefplus.center.kobe-u.ac.jp/lms/task">Open BEEF+</a>
       </div>
-      <p id="lastUpdated" class="updated-time">最終更新：データ未取得</p>
+      <p id="lastUpdated" class="updated-time">Last sync: no data</p>
       <section id="taskList" class="task-container">
-        <p>課題は登録されていません。</p>
+        <p>No tasks yet.</p>
       </section>
     </div>
 
     <!-- 自動ログインタブ -->
     <div id="tab-autologin" class="tab-content">
-      <h2>自動ログイン設定</h2>
+      <h2>Credentials</h2>
       <form id="credentials-form">
         <label>
-          学籍番号
-          <input id="username" name="username" type="text" autocomplete="off" placeholder="例: 1234567x" required>
+          Student ID
+          <input id="username" name="username" type="text" autocomplete="off" placeholder="e.g. 1234567x" required>
         </label>
         <label>
-          パスワード
-          <input id="password" name="password" type="password" autocomplete="off" placeholder="パスワードを入力" required>
+          BEEF+ Password
+          <input id="password" name="password" type="password" autocomplete="off" placeholder="Enter password" required>
         </label>
-        <p class="note">入力した情報はブラウザのローカルストレージにのみ保存され、いつでも削除できます。</p>
+        <p class="note">機密情報はあなたのブラウザのローカルストレージの中にのみ保存され、いつでも削除可能です。<br>Credentials are stored only in your browser and can be removed anytime.</p>
         <div class="actions">
-          <button type="submit" class="save" id="action-btn" disabled>保存</button>
-          <button type="button" class="clear" id="clear-btn">削除</button>
+          <button type="submit" class="save" id="action-btn" disabled>Save</button>
+          <button type="button" class="clear" id="clear-btn">Remove</button>
         </div>
         <p id="status" role="status" aria-live="polite"></p>
       </form>

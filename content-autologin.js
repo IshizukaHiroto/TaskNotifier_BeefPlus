@@ -36,8 +36,7 @@ class AutoLoginRunner {
         return null;
       }
       return credentials;
-    } catch (error) {
-      console.error("資格情報の読み込みに失敗しました", error);
+    } catch {
       return null;
     }
   }
@@ -113,15 +112,11 @@ class AutoLoginRunner {
 
   async run() {
     if (!this.canAttempt()) {
-      console.info(
-        "BeefPlusAutoLogin: サインイン試行が上限に達したため自動送信しません。"
-      );
       return;
     }
 
     const credentials = await this.loadCredentials();
     if (!credentials) {
-      console.info("BeefPlusAutoLogin: 保存された資格情報がないため何も実行しません。");
       return;
     }
 
@@ -145,7 +140,5 @@ class AutoLoginRunner {
   const runner = new AutoLoginRunner(document, chrome.storage.local, sessionStorage, location);
   runner
     .run()
-    .catch((error) =>
-      console.error("BeefPlusAutoLogin: 実行中にエラーが発生しました", error)
-    );
+    .catch(() => {});
 })();

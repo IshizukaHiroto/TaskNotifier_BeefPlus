@@ -39,30 +39,21 @@ class NotificationScheduler {
     const now = Date.now();
 
     if (dueTime <= now) {
-      console.log(`[BEEF+] 締切済みのため通知スキップ: ${task.title}`);
       return;
     }
 
     const immediateThresholdMs = 60 * 1000;
     if (dueTime - now <= immediateThresholdMs) {
-      console.log(`[BEEF+] 即時通知: ${task.title}`);
       this.createNotification(task, 0);
       return;
     }
 
-    let scheduled = false;
-    for (const { hours, label } of this.offsets) {
+    for (const { hours } of this.offsets) {
       const when = dueTime - hours * 60 * 60 * 1000;
       if (when > now) {
         const alarmName = `notify-${btoa(task.url)}-${hours}`;
         this.alarms.create(alarmName, { when });
-        console.log(`[BEEF+] 通知予約: ${task.title} (${label})`);
-        scheduled = true;
       }
-    }
-
-    if (!scheduled) {
-      console.log(`[BEEF+] 通知予約対象外（残り時間が1時間未満）: ${task.title}`);
     }
   }
 
@@ -76,7 +67,6 @@ class NotificationScheduler {
     this.storageArea.get("tasks", (data) => {
       const task = (data.tasks || []).find((t) => t.url === url);
       if (task) {
-        console.log(`[BEEF+] 通知発火: ${task.title} (${hours}時間前)`);
         this.createNotification(task, Number(hours));
       }
     });

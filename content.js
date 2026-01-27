@@ -42,7 +42,6 @@ class TaskPageParser {
       });
     });
 
-    console.log("[BEEF+] 抽出した課題:", tasks);
     return { tasks, noPendingDetected };
   }
 }
@@ -61,23 +60,12 @@ class TaskStorageUpdater {
       const added = newTasks.filter((t) => !oldTasks.some((o) => o.url === t.url));
       const merged = [...kept, ...added];
 
-      this.storage.set(
-        {
-          tasks: merged,
-          noPending: false,
-          noPendingMessage: "",
-          lastUpdated: new Date().toISOString(),
-        },
-        () => {
-          if (added.length > 0 || kept.length !== oldTasks.length) {
-            console.log(
-              `[BEEF+] 課題一覧を更新しました (${merged.length}件, 新規:${added.length})`
-            );
-          } else {
-            console.log("[BEEF+] 課題に変更はありません。");
-          }
-        }
-      );
+      this.storage.set({
+        tasks: merged,
+        noPending: false,
+        noPendingMessage: "",
+        lastUpdated: new Date().toISOString(),
+      });
     });
   }
 }
@@ -92,26 +80,18 @@ class TaskPageController {
   run() {
     const result = this.parser.parse();
     if (result.noPendingDetected) {
-      this.storage.set(
-        {
-          tasks: [],
-          noPending: true,
-          noPendingMessage: "未提出の課題・テストはありません。おつかれさま！",
-          lastUpdated: new Date().toISOString(),
-        },
-        () => {
-          console.log("[BEEF+] 未提出の課題・テストはありません。");
-        }
-      );
+      this.storage.set({
+        tasks: [],
+        noPending: true,
+        noPendingMessage: "✅ 未提出の課題・テストはありません",
+        lastUpdated: new Date().toISOString(),
+      });
       return;
     }
 
     if (result.tasks.length > 0) {
       this.updater.update(result.tasks);
-      return;
     }
-
-    console.warn("[BEEF+] 課題が見つかりませんでした。ページ構造が変わった可能性があります。");
   }
 }
 
