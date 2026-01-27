@@ -1,285 +1,329 @@
 // === popup.js ===
 
-// ===== タブ切り替え =====
-document.addEventListener("DOMContentLoaded", () => {
-  const tabButtons = document.querySelectorAll(".tab-btn");
-  const tabContents = document.querySelectorAll(".tab-content");
+class PopupTabs {
+  constructor(doc) {
+    this.doc = doc;
+  }
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetTab = btn.dataset.tab;
+  init() {
+    const tabButtons = this.doc.querySelectorAll(".tab-btn");
+    const tabContents = this.doc.querySelectorAll(".tab-content");
 
-      tabButtons.forEach(b => b.classList.remove("active"));
-      tabContents.forEach(c => c.classList.remove("active"));
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetTab = btn.dataset.tab;
 
-      btn.classList.add("active");
-      document.getElementById(`tab-${targetTab}`).classList.add("active");
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        tabContents.forEach((c) => c.classList.remove("active"));
+
+        btn.classList.add("active");
+        this.doc.getElementById(`tab-${targetTab}`).classList.add("active");
+      });
     });
-  });
-
-  // 課題一覧を読み込み
-  loadTasks();
-
-  // 自動ログイン設定を読み込み
-  loadCredentials();
-});
-
-// ===== 課題一覧機能 =====
-
-// 残り時間をユーザーフレンドリーにフォーマット
-function formatRemainingTime(dueISO) {
-  const now = new Date();
-  const due = new Date(dueISO);
-  const diffMs = due - now;
-
-  if (diffMs <= 0) return "締切済み";
-
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-  const remainingHours = diffHours % 24;
-  const remainingMinutes = diffMinutes % 60;
-
-  // 2日以上の場合
-  if (diffDays >= 2) {
-    return `あと${diffDays}日`;
   }
-
-  // 1日以上2日未満の場合
-  if (diffDays === 1) {
-    if (remainingHours > 0) {
-      return `あと1日と${remainingHours}時間`;
-    }
-    return "あと1日";
-  }
-
-  // 1時間以上24時間未満の場合
-  if (diffHours >= 1) {
-    if (remainingMinutes > 0 && diffHours < 12) {
-      return `あと${diffHours}時間${remainingMinutes}分`;
-    }
-    return `あと${diffHours}時間`;
-  }
-
-  // 1時間未満の場合
-  const minutesToShow = Math.max(1, diffMinutes);
-  return `あと${minutesToShow}分`;
 }
 
-// 残り時間に応じた緊急度クラスを返す
-function getUrgencyClass(dueISO) {
-  const now = new Date();
-  const due = new Date(dueISO);
-  const diffMs = due - now;
-  const diffHours = diffMs / (1000 * 60 * 60);
+class TaskListController {
+  constructor(storage, doc) {
+    this.storage = storage;
+    this.doc = doc;
+  }
 
-  if (diffMs <= 0) return "expired";
-  if (diffHours <= 3) return "urgent";
-  if (diffHours <= 24) return "warning";
-  if (diffHours <= 48) return "soon";
-  return "normal";
-}
+  init() {
+    this.load();
+  }
 
-// 課題一覧を描画
-function loadTasks() {
-  chrome.storage.local.get(["tasks", "lastUpdated", "noPending", "noPendingMessage"], (data) => {
-    const container = document.getElementById("taskList");
-    const updated = document.getElementById("lastUpdated");
-    const tasks = (data.tasks || []).sort((a, b) => new Date(a.due) - new Date(b.due));
-    const beefLink = document.querySelector(".beef-link-btn");
-    const noPending = Boolean(data.noPending);
-    const noPendingMessage = data.noPendingMessage || "未提出の課題・テストはありません。おつかれさま！";
+  formatRemainingTime(dueISO) {
+    const now = new Date();
+    const due = new Date(dueISO);
+    const diffMs = due - now;
 
-    if (tasks.length === 0 && noPending) {
-      container.innerHTML = `
+    if (diffMs <= 0) return "締切済み";
+
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    const remainingHours = diffHours % 24;
+    const remainingMinutes = diffMinutes % 60;
+
+    if (diffDays >= 2) {
+      return `あと${diffDays}日`;
+    }
+
+    if (diffDays === 1) {
+      if (remainingHours > 0) {
+        return `あと1日と${remainingHours}時間`;
+      }
+      return "あと1日";
+    }
+
+    if (diffHours >= 1) {
+      if (remainingMinutes > 0 && diffHours < 12) {
+        return `あと${diffHours}時間${remainingMinutes}分`;
+      }
+      return `あと${diffHours}時間`;
+    }
+
+    const minutesToShow = Math.max(1, diffMinutes);
+    return `あと${minutesToShow}分`;
+  }
+
+  getUrgencyClass(dueISO) {
+    const now = new Date();
+    const due = new Date(dueISO);
+    const diffMs = due - now;
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    if (diffMs <= 0) return "expired";
+    if (diffHours <= 3) return "urgent";
+    if (diffHours <= 24) return "warning";
+    if (diffHours <= 48) return "soon";
+    return "normal";
+  }
+
+  renderNoPending(container, message) {
+    container.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">🎉</span>
-          <p>${noPendingMessage}</p>
+          <p>${message}</p>
           <p class="empty-hint">この調子でいきましょう</p>
         </div>
       `;
-    } else if (tasks.length === 0) {
-      container.innerHTML = `
+  }
+
+  renderEmpty(container) {
+    container.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">📋</span>
           <p>課題は登録されていません</p>
           <p class="empty-hint">Beef+の課題ページを開くと自動で取得されます</p>
         </div>
       `;
-    } else {
-      container.innerHTML = "";
-      for (const t of tasks) {
-        const card = document.createElement("div");
-        const urgency = getUrgencyClass(t.due);
-        card.className = `task-card ${urgency}`;
-        card.innerHTML = `
+  }
+
+  renderTasks(container, tasks) {
+    container.innerHTML = "";
+    for (const task of tasks) {
+      const card = this.doc.createElement("div");
+      const urgency = this.getUrgencyClass(task.due);
+      card.className = `task-card ${urgency}`;
+      card.innerHTML = `
           <div class="task-header">
-            <div class="task-title">${t.title}</div>
-            <span class="remaining ${urgency}">${formatRemainingTime(t.due)}</span>
+            <div class="task-title">${task.title}</div>
+            <span class="remaining ${urgency}">${this.formatRemainingTime(task.due)}</span>
           </div>
           <div class="task-meta">
-            <span class="course-tag">${t.course}</span>
-            <span class="content-tag">${t.contentType}</span>
+            <span class="course-tag">${task.course}</span>
+            <span class="content-tag">${task.contentType}</span>
           </div>
           <div class="task-due">
-            <span class="due-label">締切：${new Date(t.due).toLocaleString("ja-JP", {
-          month: "numeric",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })}</span>
+            <span class="due-label">締切：${new Date(task.due).toLocaleString("ja-JP", {
+              month: "numeric",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}</span>
           </div>
         `;
-        card.addEventListener("click", () => chrome.tabs.create({ url: t.url }));
-        container.appendChild(card);
-      }
+      card.addEventListener("click", () => chrome.tabs.create({ url: task.url }));
+      container.appendChild(card);
     }
+  }
 
-    // 最終更新時刻
-    if (data.lastUpdated) {
-      const date = new Date(data.lastUpdated);
-      updated.textContent = `最終更新：${date.toLocaleString("ja-JP", {
+  renderUpdated(updatedEl, lastUpdated) {
+    if (lastUpdated) {
+      const date = new Date(lastUpdated);
+      updatedEl.textContent = `最終更新：${date.toLocaleString("ja-JP", {
         month: "numeric",
         day: "numeric",
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
       })}`;
     } else {
-      updated.textContent = "最終更新：データ未取得";
+      updatedEl.textContent = "最終更新：データ未取得";
+    }
+  }
+
+  wireBeefLink() {
+    const beefLink = this.doc.querySelector(".beef-link-btn");
+    if (!beefLink) return;
+    beefLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      chrome.tabs.create({ url: beefLink.href });
+    });
+  }
+
+  load() {
+    this.storage.get(["tasks", "lastUpdated", "noPending", "noPendingMessage"], (data) => {
+      const container = this.doc.getElementById("taskList");
+      const updated = this.doc.getElementById("lastUpdated");
+      const tasks = (data.tasks || []).sort(
+        (a, b) => new Date(a.due) - new Date(b.due)
+      );
+      const noPending = Boolean(data.noPending);
+      const noPendingMessage =
+        data.noPendingMessage || "未提出の課題・テストはありません。おつかれさま！";
+
+      if (tasks.length === 0 && noPending) {
+        this.renderNoPending(container, noPendingMessage);
+      } else if (tasks.length === 0) {
+        this.renderEmpty(container);
+      } else {
+        this.renderTasks(container, tasks);
+      }
+
+      this.renderUpdated(updated, data.lastUpdated);
+      this.wireBeefLink();
+    });
+  }
+}
+
+class AutoLoginController {
+  constructor(storage, doc) {
+    this.storage = storage;
+    this.doc = doc;
+    this.storageKey = "beefplusAutoLoginCredentials";
+    this.storedCredentials = null;
+
+    this.form = null;
+    this.usernameInput = null;
+    this.passwordInput = null;
+    this.actionButton = null;
+    this.clearButton = null;
+    this.statusArea = null;
+  }
+
+  init() {
+    this.form = this.doc.getElementById("credentials-form");
+    this.usernameInput = this.doc.getElementById("username");
+    this.passwordInput = this.doc.getElementById("password");
+    this.actionButton = this.doc.getElementById("action-btn");
+    this.clearButton = this.doc.getElementById("clear-btn");
+    this.statusArea = this.doc.getElementById("status");
+
+    this.form.addEventListener("submit", (event) => this.saveOrUpdateCredentials(event));
+    this.usernameInput.addEventListener("input", () => this.updateActionState());
+    this.passwordInput.addEventListener("input", () => this.updateActionState());
+    this.clearButton.addEventListener("click", () => this.clearCredentials());
+
+    this.loadCredentials();
+  }
+
+  showStatus(message, type = "info") {
+    this.statusArea.textContent = message;
+    this.statusArea.className = type;
+  }
+
+  async persistCredentials(username, password) {
+    await this.storage.set({
+      [this.storageKey]: { username, password },
+    });
+  }
+
+  async loadCredentials() {
+    try {
+      const stored = await this.storage.get(this.storageKey);
+      const credentials = stored[this.storageKey];
+      if (credentials) {
+        this.storedCredentials = credentials;
+        this.usernameInput.value = credentials.username || "";
+        this.passwordInput.value = credentials.password || "";
+        this.showStatus("✓ 保存済みの情報を読み込みました", "success");
+      } else {
+        this.showStatus("保存された情報はありません", "info");
+      }
+      this.updateActionState();
+    } catch (error) {
+      console.error("資格情報の読み込みに失敗しました", error);
+      this.showStatus("保存情報の読み込みに失敗しました", "error");
+    }
+  }
+
+  updateActionState() {
+    const username = this.usernameInput.value.trim();
+    const password = this.passwordInput.value;
+    const hasInput = Boolean(username && password);
+    const hasStored = Boolean(this.storedCredentials);
+    const matchesStored =
+      hasStored &&
+      this.storedCredentials.username === username &&
+      this.storedCredentials.password === password;
+
+    if (!hasStored) {
+      this.actionButton.textContent = "保存";
+      this.actionButton.disabled = !hasInput;
+      return;
     }
 
-    // Beef+リンク
-    if (beefLink) {
-      beefLink.addEventListener("click", (event) => {
-        event.preventDefault();
-        chrome.tabs.create({ url: beefLink.href });
-      });
+    if (matchesStored) {
+      this.actionButton.textContent = "保存済";
+      this.actionButton.disabled = true;
+      return;
     }
-  });
-}
 
-// ===== 自動ログイン機能 =====
-const STORAGE_KEY = "beefplusAutoLoginCredentials";
-let storedCredentials = null;
+    this.actionButton.textContent = "更新";
+    this.actionButton.disabled = !hasInput;
+  }
 
-function showStatus(message, type = "info") {
-  const statusArea = document.getElementById("status");
-  statusArea.textContent = message;
-  statusArea.className = type;
-}
+  async saveOrUpdateCredentials(event) {
+    event.preventDefault();
 
-async function persistCredentials(username, password) {
-  await chrome.storage.local.set({
-    [STORAGE_KEY]: { username, password },
-  });
-}
+    const username = this.usernameInput.value.trim();
+    const password = this.passwordInput.value;
+    const hasInput = Boolean(username && password);
 
-async function loadCredentials() {
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-
-  try {
-    const stored = await chrome.storage.local.get(STORAGE_KEY);
-    const credentials = stored[STORAGE_KEY];
-    if (credentials) {
-      storedCredentials = credentials;
-      usernameInput.value = credentials.username || "";
-      passwordInput.value = credentials.password || "";
-      showStatus("✓ 保存済みの情報を読み込みました", "success");
-    } else {
-      showStatus("保存された情報はありません", "info");
+    if (!hasInput) {
+      this.showStatus("学籍番号とパスワードを入力してください", "error");
+      return;
     }
-    updateActionState();
-  } catch (error) {
-    console.error("資格情報の読み込みに失敗しました", error);
-    showStatus("保存情報の読み込みに失敗しました", "error");
+
+    try {
+      await this.persistCredentials(username, password);
+      this.storedCredentials = { username, password };
+      const message =
+        this.actionButton.textContent === "更新"
+          ? "✓ 情報を更新しました"
+          : "✓ 保存しました";
+      this.showStatus(message, "success");
+      this.updateActionState();
+    } catch (error) {
+      console.error("資格情報の保存/更新に失敗しました", error);
+      this.showStatus("保存/更新に失敗しました", "error");
+    }
+  }
+
+  async clearCredentials() {
+    try {
+      await this.storage.remove(this.storageKey);
+      this.usernameInput.value = "";
+      this.passwordInput.value = "";
+      this.storedCredentials = null;
+      this.showStatus("保存情報を削除しました", "info");
+      this.updateActionState();
+    } catch (error) {
+      console.error("資格情報の削除に失敗しました", error);
+      this.showStatus("削除に失敗しました", "error");
+    }
   }
 }
 
-function updateActionState() {
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-  const actionButton = document.getElementById("action-btn");
-
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value;
-  const hasInput = Boolean(username && password);
-  const hasStored = Boolean(storedCredentials);
-  const matchesStored =
-    hasStored &&
-    storedCredentials.username === username &&
-    storedCredentials.password === password;
-
-  if (!hasStored) {
-    actionButton.textContent = "保存";
-    actionButton.disabled = !hasInput;
-    return;
+class PopupApp {
+  constructor(doc, storage) {
+    this.doc = doc;
+    this.storage = storage;
+    this.tabs = new PopupTabs(doc);
+    this.taskList = new TaskListController(storage, doc);
+    this.autoLogin = new AutoLoginController(storage, doc);
   }
 
-  if (matchesStored) {
-    actionButton.textContent = "保存済";
-    actionButton.disabled = true;
-    return;
-  }
-
-  actionButton.textContent = "更新";
-  actionButton.disabled = !hasInput;
-}
-
-async function saveOrUpdateCredentials(event) {
-  event.preventDefault();
-
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-  const actionButton = document.getElementById("action-btn");
-
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value;
-  const hasInput = Boolean(username && password);
-
-  if (!hasInput) {
-    showStatus("学籍番号とパスワードを入力してください", "error");
-    return;
-  }
-
-  try {
-    await persistCredentials(username, password);
-    storedCredentials = { username, password };
-    const message = actionButton.textContent === "更新" ? "✓ 情報を更新しました" : "✓ 保存しました";
-    showStatus(message, "success");
-    updateActionState();
-  } catch (error) {
-    console.error("資格情報の保存/更新に失敗しました", error);
-    showStatus("保存/更新に失敗しました", "error");
+  init() {
+    this.tabs.init();
+    this.taskList.init();
+    this.autoLogin.init();
   }
 }
 
-async function clearCredentials() {
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-
-  try {
-    await chrome.storage.local.remove(STORAGE_KEY);
-    usernameInput.value = "";
-    passwordInput.value = "";
-    storedCredentials = null;
-    showStatus("保存情報を削除しました", "info");
-    updateActionState();
-  } catch (error) {
-    console.error("資格情報の削除に失敗しました", error);
-    showStatus("削除に失敗しました", "error");
-  }
-}
-
-// イベントリスナーを設定
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("credentials-form");
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-  const clearButton = document.getElementById("clear-btn");
-
-  form.addEventListener("submit", saveOrUpdateCredentials);
-  usernameInput.addEventListener("input", updateActionState);
-  passwordInput.addEventListener("input", updateActionState);
-  clearButton.addEventListener("click", clearCredentials);
+this.document.addEventListener("DOMContentLoaded", () => {
+  const app = new PopupApp(document, chrome.storage.local);
+  app.init();
 });

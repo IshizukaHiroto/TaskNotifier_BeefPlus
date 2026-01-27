@@ -1,92 +1,123 @@
 // === content.js ===
 // BEEF+ の「課題・テスト一覧」ページから課題情報を抽出して保存
 
-function parseTasks() {
-  const tasks = [];
-  const noPendingEl = document.querySelector(".contents-detail .contents-list .no-data");
-  const noPendingDetected = Boolean(
-    noPendingEl && noPendingEl.textContent.includes("未提出の課題・テスト一覧はありません")
-  );
+class TaskPageParser {
+  constructor(doc, loc) {
+    this.doc = doc;
+    this.loc = loc;
+  }
 
-  // 各課題行を取得
-  const rows = document.querySelectorAll(".result_list_line.sortTaskBlock");
+  parse() {
+    const tasks = [];
+    const noPendingEl = this.doc.querySelector(".contents-detail .contents-list .no-data");
+    const noPendingDetected = Boolean(
+      noPendingEl && noPendingEl.textContent.includes("未提出の課題・テスト一覧はありません")
+    );
 
-  rows.forEach(row => {
-    const courseEl = row.querySelector(".tasklist-course");
-    const contentEl = row.querySelector(".tasklist-contents a");
-    const titleEl = row.querySelector(".tasklist-title a");
-    const deadlineEl = row.querySelector(".tasklist-deadline .deadline");
+    const rows = this.doc.querySelectorAll(".result_list_line.sortTaskBlock");
 
-    if (!courseEl || !contentEl || !titleEl || !deadlineEl) return;
+    rows.forEach((row) => {
+      const courseEl = row.querySelector(".tasklist-course");
+      const contentEl = row.querySelector(".tasklist-contents a");
+      const titleEl = row.querySelector(".tasklist-title a");
+      const deadlineEl = row.querySelector(".tasklist-deadline .deadline");
 
-    const course = courseEl.textContent.trim();
-    const contentType = contentEl.textContent.trim();
-    const title = titleEl.textContent.trim();
-    const url = new URL(titleEl.getAttribute("href"), location.origin).href;
-    const dueText = deadlineEl.textContent.trim();
+      if (!courseEl || !contentEl || !titleEl || !deadlineEl) return;
 
-    // 期限をISO形式に変換
-    const due = new Date(dueText.replace(/-/g, "/"));
-    if (isNaN(due)) return; // 無効な日付はスキップ
+      const course = courseEl.textContent.trim();
+      const contentType = contentEl.textContent.trim();
+      const title = titleEl.textContent.trim();
+      const url = new URL(titleEl.getAttribute("href"), this.loc.origin).href;
+      const dueText = deadlineEl.textContent.trim();
 
-    tasks.push({
-      course,
-      contentType,
-      title,
-      url,
-      due: due.toISOString()
+      const due = new Date(dueText.replace(/-/g, "/"));
+      if (isNaN(due)) return;
+
+      tasks.push({
+        course,
+        contentType,
+        title,
+        url,
+        due: due.toISOString(),
+      });
     });
-  });
 
-  console.log("[BEEF+] 抽出した課題:", tasks);
-  return { tasks, noPendingDetected };
+    console.log("[BEEF+] 抽出した課題:", tasks);
+    return { tasks, noPendingDetected };
+  }
 }
 
-// === ストレージ更新（新規追加・削除・更新） ===
-function updateStoredTasks(newTasks) {
-  chrome.storage.local.get("tasks", (data) => {
-    const oldTasks = data.tasks || [];
-    const newUrls = newTasks.map(t => t.url);
+class TaskStorageUpdater {
+  constructor(storage) {
+    this.storage = storage;
+  }
 
-    // 消えた課題は削除
-    const kept = oldTasks.filter(t => newUrls.includes(t.url));
+  update(newTasks) {
+    this.storage.get("tasks", (data) => {
+      const oldTasks = data.tasks || [];
+      const newUrls = newTasks.map((t) => t.url);
 
-    // 新規追加
-    const added = newTasks.filter(t => !oldTasks.some(o => o.url === t.url));
+      const kept = oldTasks.filter((t) => newUrls.includes(t.url));
+      const added = newTasks.filter((t) => !oldTasks.some((o) => o.url === t.url));
+      const merged = [...kept, ...added];
 
-    // === 修正①: 保存する配列を "tasks" ではなく "merged" に修正 ===
-    const merged = [...kept, ...added];
-
-    // === 修正②: lastUpdated を保存し、正しい変数を使用 ===
-    chrome.storage.local.set({
-      tasks: merged,
-      noPending: false,
-      noPendingMessage: "",
-      lastUpdated: new Date().toISOString()
-    }, () => {
-      // === 修正③: より明確なログ出力 ===
-      if (added.length > 0 || kept.length !== oldTasks.length) {
-        console.log(`[BEEF+] 課題一覧を更新しました (${merged.length}件, 新規:${added.length})`);
-      } else {
-        console.log("[BEEF+] 課題に変更はありません。");
-      }
+      this.storage.set(
+        {
+          tasks: merged,
+          noPending: false,
+          noPendingMessage: "",
+          lastUpdated: new Date().toISOString(),
+        },
+        () => {
+          if (added.length > 0 || kept.length !== oldTasks.length) {
+            console.log(
+              `[BEEF+] 課題一覧を更新しました (${merged.length}件, 新規:${added.length})`
+            );
+          } else {
+            console.log("[BEEF+] 課題に変更はありません。");
+          }
+        }
+      );
     });
-  });
+  }
 }
 
-// === 実行 ===
-const result = parseTasks();
-if (result.noPendingDetected) {
-  chrome.storage.local.set({
-    tasks: [],
-    noPending: true,
-    noPendingMessage: "未提出の課題・テストはありません。おつかれさま！",
-    lastUpdated: new Date().toISOString()
-  }, () => {
-    console.log("[BEEF+] 未提出の課題・テストはありません。");
-  });
-} else if (result.tasks.length > 0) {
-  updateStoredTasks(result.tasks);
-} else {
-  console.warn("[BEEF+] 課題が見つかりませんでした。ページ構造が変わった可能性があります。");
+class TaskPageController {
+  constructor(parser, updater, storage) {
+    this.parser = parser;
+    this.updater = updater;
+    this.storage = storage;
+  }
+
+  run() {
+    const result = this.parser.parse();
+    if (result.noPendingDetected) {
+      this.storage.set(
+        {
+          tasks: [],
+          noPending: true,
+          noPendingMessage: "未提出の課題・テストはありません。おつかれさま！",
+          lastUpdated: new Date().toISOString(),
+        },
+        () => {
+          console.log("[BEEF+] 未提出の課題・テストはありません。");
+        }
+      );
+      return;
+    }
+
+    if (result.tasks.length > 0) {
+      this.updater.update(result.tasks);
+      return;
+    }
+
+    console.warn("[BEEF+] 課題が見つかりませんでした。ページ構造が変わった可能性があります。");
+  }
 }
+
+(() => {
+  const parser = new TaskPageParser(document, location);
+  const updater = new TaskStorageUpdater(chrome.storage.local);
+  const controller = new TaskPageController(parser, updater, chrome.storage.local);
+  controller.run();
+})();
