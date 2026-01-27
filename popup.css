@@ -27,7 +27,7 @@
     --bg-bottom: #0d1117;
     --surface: #161b22;
     --surface-muted: #0f141b;
-    --surface-strong: #1f242c;
+    --surface-strong: #21262d;
     --border: #30363d;
     --text-primary: #c9d1d9;
     --text-secondary: #8b949e;
@@ -70,7 +70,7 @@ body {
   body {
     background: radial-gradient(
         circle at top,
-        rgba(88, 166, 255, 0.08),
+        rgba(88, 166, 255, 0.1),
         rgba(13, 17, 23, 0.96) 45%,
         rgba(13, 17, 23, 0.98)
       ),
@@ -94,6 +94,7 @@ body {
 @media (prefers-color-scheme: dark) {
   .popup-shell {
     background: linear-gradient(180deg, rgba(22, 27, 34, 0.98), #161b22);
+    border-color: var(--border);
   }
 }
 
@@ -135,7 +136,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
   .tab-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(240, 246, 252, 0.08);
   }
 }
 
@@ -516,7 +517,7 @@ h2 {
 
 @media (prefers-color-scheme: dark) {
   .actions button.clear:hover {
-    background: #2b313a;
+    background: #2d333b;
   }
 }
 
